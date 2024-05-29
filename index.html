@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>遊戲嵌入頁面</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #000;
+            color: #fff;
+        }
+        .loading-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background-color: #000;
+            z-index: 1000;
+        }
+        .loading-screen .logo {
+            width: 300px; /* 調整這裡的寬度以適應新圖片 */
+            height: auto;
+            margin-bottom: 20px;
+        }
+        .loading-screen .spinner {
+            border: 16px solid #f3f3f3;
+            border-top: 16px solid #3498db;
+            border-radius: 50%;
+            width: 120px;
+            height: 120px;
+            animation: spin 2s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .game-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .game-container iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="loading-screen">
+        <img class="logo" src="https://i.postimg.cc/Tw8MFdWG/bannerr0501.jpg" alt="Logo">
+        <div class="spinner"></div>
+    </div>
+    <div class="game-container">
+        <iframe src="https://www.spatial.io/embed/hklss-R05-Yuan-Yu-Zhou-6655f74ec09ba33407260ef0?share=7205130941904465268&autoplay=1&enableRtc=1"
+            allow="camera; fullscreen; autoplay; display-capture; microphone; clipboard-write"></iframe>
+    </div>
+
+    <script>
+        // 等待6秒後隱藏進入畫面
+        setTimeout(function() {
+            document.querySelector('.loading-screen').style.display = 'none';
+        }, 10000);
+    </script>
+</body>
+</html>
