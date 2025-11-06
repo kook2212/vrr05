@@ -3,81 +3,357 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>遊戲嵌入頁面</title>
+    <title>數字人聊天機器人模擬 (含語音輸入)</title>
     <style>
-        body, html {
+        :root {
+            --primary-bg: #1a1a1a;
+            --secondary-bg: #2b2b2b;
+            --text-color: #e0e0e0;
+            --accent-color: #007bff;
+            --border-color: #444;
+            --danger-color: #dc3545;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--primary-bg);
+            color: var(--text-color);
             margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
             display: flex;
             justify-content: center;
             align-items: center;
-            background-color: #000;
-            color: #fff;
+            height: 100vh;
+            padding: 1rem;
+            box-sizing: border-box;
         }
-        .loading-screen {
-            position: absolute;
-            top: 0;
-            left: 0;
+
+        .chat-container {
             width: 100%;
-            height: 100%;
+            max-width: 500px;
+            height: 80vh;
+            max-height: 700px;
+            background-color: var(--secondary-bg);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
             display: flex;
             flex-direction: column;
-            justify-content: center;
-            align-items: center;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+        }
+
+        .avatar-section {
             background-color: #000;
-            z-index: 1000;
-        }
-        .loading-screen .logo {
-            width: 300px; /* 調整這裡的寬度以適應新圖片 */
-            height: auto;
-            margin-bottom: 20px;
-        }
-        .loading-screen .spinner {
-            border: 16px solid #f3f3f3;
-            border-top: 16px solid #3498db;
-            border-radius: 50%;
-            width: 120px;
-            height: 120px;
-            animation: spin 2s linear infinite;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        .game-container {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            padding: 20px;
+            flex-shrink: 0;
+            position: relative;
             display: flex;
             justify-content: center;
             align-items: center;
         }
-        .game-container iframe {
+
+        #avatar-image {
             width: 100%;
-            height: 100%;
-            border: none;
+            max-width: 250px;
+            height: auto;
+            aspect-ratio: 1 / 1;
+            object-fit: cover;
+            border-radius: 15px;
+            border: 3px solid var(--accent-color);
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
         }
+
+        #avatar-image.speaking {
+            animation: speaking-effect 0.4s infinite alternate;
+        }
+
+        @keyframes speaking-effect {
+            0% {
+                transform: scale(1);
+                box-shadow: 0 0 10px var(--accent-color);
+            }
+            100% {
+                transform: scale(1.02);
+                box-shadow: 0 0 20px var(--accent-color), 0 0 30px var(--accent-color);
+            }
+        }
+
+        .chat-messages {
+            flex-grow: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .message {
+            max-width: 75%;
+            padding: 10px 15px;
+            border-radius: 18px;
+            margin-bottom: 10px;
+            line-height: 1.4;
+        }
+
+        .user-message {
+            background-color: var(--accent-color);
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 5px;
+        }
+
+        .bot-message {
+            background-color: #3a3a3a;
+            color: var(--text-color);
+            align-self: flex-start;
+            border-bottom-left-radius: 5px;
+        }
+
+        .input-section {
+            display: flex;
+            padding: 15px;
+            border-top: 1px solid var(--border-color);
+            background-color: var(--secondary-bg);
+            align-items: center; /* 垂直居中對齊 */
+        }
+
+        #user-input {
+            flex-grow: 1;
+            padding: 10px 15px;
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            background-color: #333;
+            color: var(--text-color);
+            font-size: 16px;
+            margin-right: 10px;
+        }
+
+        #user-input:focus {
+            outline: none;
+            border-color: var(--accent-color);
+        }
+
+        #send-btn {
+            padding: 10px 20px;
+            border: none;
+            background-color: var(--accent-color);
+            color: white;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.2s;
+            flex-shrink: 0; /* 防止按鈕被壓縮 */
+        }
+
+        #send-btn:hover {
+            background-color: #0056b3;
+        }
+        
+        /* --- CSS 新增：麥克風按鈕樣式 --- */
+        #mic-btn {
+            background: none;
+            border: none;
+            padding: 8px;
+            margin-right: 5px;
+            cursor: pointer;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.2s;
+            flex-shrink: 0;
+        }
+
+        #mic-btn:hover {
+            background-color: #444;
+        }
+
+        #mic-btn svg {
+            width: 24px;
+            height: 24px;
+            fill: var(--text-color);
+        }
+
+        #mic-btn.listening {
+            background-color: var(--danger-color);
+        }
+
+        #mic-btn.listening svg {
+            fill: white;
+        }
+        /* --- CSS 新增結束 --- */
+
     </style>
 </head>
 <body>
-    <div class="loading-screen">
-        <img class="logo" src="https://i.postimg.cc/zXy7bnct/bannerr0501.jpg" alt="Logo">
-        <div class="spinner"></div>
-    </div>
-    <div class="game-container">
-        <iframe src="https://www.spatial.io/embed/hklss-R05-Yuan-Yu-Zhou-6655f74ec09ba33407260ef0?share=7205130941904465268&autoplay=1&enableRtc=1"
-            allow="camera; fullscreen; autoplay; display-capture; microphone; clipboard-write"></iframe>
+
+    <div class="chat-container">
+        <div class="avatar-section">
+            <img id="avatar-image" src="https://raw.githubusercontent.com/kook2212/dicky/main/20251106224045.png" alt="數字人頭像">
+        </div>
+        <div class="chat-messages" id="chat-messages">
+            <div class="message bot-message">你好！我是您的數字人助理。您可以打字，或點擊麥克風對我說話。</div>
+        </div>
+        <div class="input-section">
+            <input type="text" id="user-input" placeholder="在這裡輸入訊息...">
+            <!-- HTML 新增：麥克風按鈕 -->
+            <button id="mic-btn" title="語音輸入">
+                <svg viewBox="0 0 24 24">
+                    <path d="M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.49 6-3.31 6-6.72h-1.7z"/>
+                </svg>
+            </button>
+            <button id="send-btn">發送</button>
+        </div>
     </div>
 
     <script>
-        // 等待6秒後隱藏進入畫面
-        setTimeout(function() {
-            document.querySelector('.loading-screen').style.display = 'none';
-        }, 11000);
+        const chatMessages = document.getElementById('chat-messages');
+        const userInput = document.getElementById('user-input');
+        const sendBtn = document.getElementById('send-btn');
+        const avatarImage = document.getElementById('avatar-image');
+        const micBtn = document.getElementById('mic-btn'); // 新增：獲取麥克風按鈕
+
+        // --- JavaScript 語音辨識核心功能 ---
+
+        // 檢查瀏覽器是否支援 SpeechRecognition
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        let recognition;
+
+        if (SpeechRecognition) {
+            recognition = new SpeechRecognition();
+            
+            // 設定辨識語言，'zh-HK' 是香港粵語，'zh-TW' 是台灣國語
+            recognition.lang = 'zh-HK'; 
+            recognition.continuous = false; // 只辨識一句話
+            recognition.interimResults = true; // 即時顯示辨識結果
+
+            micBtn.addEventListener('click', () => {
+                // 檢查是否正在聆聽，如果是就停止，否則就開始
+                if (micBtn.classList.contains('listening')) {
+                    recognition.stop();
+                } else {
+                    try {
+                        recognition.start();
+                    } catch (error) {
+                        console.error("語音辨識啟動失敗:", error);
+                        alert("語音辨識啟動失敗，請檢查麥克風權限或刷新頁面。");
+                    }
+                }
+            });
+
+            // 當辨識開始時
+            recognition.onstart = () => {
+                micBtn.classList.add('listening');
+                userInput.placeholder = '正在聆聽...';
+            };
+
+            // 當辨識結束時
+            recognition.onend = () => {
+                micBtn.classList.remove('listening');
+                userInput.placeholder = '在這裡輸入訊息...';
+            };
+
+            // 當發生錯誤時
+            recognition.onerror = (event) => {
+                console.error('語音辨識錯誤:', event.error);
+                let errorMessage = '發生語音辨識錯誤。';
+                if (event.error === 'not-allowed') {
+                    errorMessage = '您尚未授權使用麥克風，請點擊網址列的圖示開啟權限。';
+                } else if (event.error === 'no-speech') {
+                    errorMessage = '沒有偵測到語音，請再試一次。';
+                }
+                appendMessage(errorMessage, 'bot');
+            };
+
+            // 當有辨識結果時
+            recognition.onresult = (event) => {
+                let interimTranscript = '';
+                let finalTranscript = '';
+
+                for (let i = event.resultIndex; i < event.results.length; ++i) {
+                    if (event.results[i].isFinal) {
+                        finalTranscript += event.results[i][0].transcript;
+                    } else {
+                        interimTranscript += event.results[i][0].transcript;
+                    }
+                }
+                
+                // 將即時結果顯示在輸入框
+                userInput.value = finalTranscript || interimTranscript;
+                
+                // 如果有最終結果，就自動發送訊息
+                if (finalTranscript) {
+                    sendMessage();
+                }
+            };
+
+        } else {
+            // 如果瀏覽器不支援，隱藏按鈕並提示用戶
+            micBtn.style.display = 'none';
+            console.log('您的瀏覽器不支援語音辨識功能。');
+            // 可以在頁面上顯示更友善的提示
+        }
+
+        // --- 原有功能保持不變 ---
+
+        function sendMessage() {
+            const messageText = userInput.value.trim();
+            if (messageText === '') return;
+
+            appendMessage(messageText, 'user');
+            userInput.value = '';
+
+            setTimeout(() => {
+                generateBotResponse(messageText);
+            }, 500);
+        }
+
+        sendBtn.addEventListener('click', sendMessage);
+
+        userInput.addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        function generateBotResponse(userText) {
+            let botText = '';
+            const lowerUserText = userText.toLowerCase();
+
+            if (lowerUserText.includes('hello') || userText.includes('你好')) {
+                botText = 'Hello! 很高興見到你。';
+            } else if (userText.includes('你叫咩名') || userText.includes('你叫什么名字')) {
+                botText = '我是基於您的照片創建的數字人。您可以叫我您的數位分身。';
+            } else {
+                botText = '抱歉，我還在學習中，暫時無法理解「' + userText + '」這句話。';
+            }
+
+            appendMessage(botText, 'bot');
+            speak(botText);
+        }
+
+        function appendMessage(text, type) {
+            const messageElement = document.createElement('div');
+            messageElement.classList.add('message', type === 'user' ? 'user-message' : 'bot-message');
+            messageElement.textContent = text;
+            chatMessages.appendChild(messageElement);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+        
+        function speak(text) {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'zh-HK'; // 讓機器人也用粵語回答
+                
+                utterance.onstart = () => avatarImage.classList.add('speaking');
+                utterance.onend = () => avatarImage.classList.remove('speaking');
+                utterance.onerror = () => avatarImage.classList.remove('speaking');
+
+                window.speechSynthesis.speak(utterance);
+            } else {
+                console.log('您的瀏覽器不支援語音合成功能。');
+            }
+        }
     </script>
+
 </body>
 </html>
