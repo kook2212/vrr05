@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>數字人聊天機器人模擬 (含語音輸入)</title>
+    <title>型男社工Dicky - 激情對話</title>
     <style>
         :root {
             --primary-bg: #1a1a1a;
@@ -25,7 +25,55 @@
             height: 100vh;
             padding: 1rem;
             box-sizing: border-box;
+            overflow: hidden; /* 隱藏滾動條，因為有覆蓋層 */
         }
+
+        /* --- CSS 新增：歡迎覆蓋層 --- */
+        #welcome-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            color: white;
+            text-align: center;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        #welcome-overlay h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        #welcome-overlay p {
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+        }
+
+        #start-btn-overlay {
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: white;
+            background-color: var(--accent-color);
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: transform 0.2s, background-color 0.2s;
+        }
+
+        #start-btn-overlay:hover {
+            background-color: #0056b3;
+            transform: scale(1.05);
+        }
+        /* --- CSS 新增結束 --- */
 
         .chat-container {
             width: 100%;
@@ -112,7 +160,7 @@
             padding: 15px;
             border-top: 1px solid var(--border-color);
             background-color: var(--secondary-bg);
-            align-items: center; /* 垂直居中對齊 */
+            align-items: center;
         }
 
         #user-input {
@@ -140,14 +188,13 @@
             cursor: pointer;
             font-size: 16px;
             transition: background-color 0.2s;
-            flex-shrink: 0; /* 防止按鈕被壓縮 */
+            flex-shrink: 0;
         }
 
         #send-btn:hover {
             background-color: #0056b3;
         }
         
-        /* --- CSS 新增：麥克風按鈕樣式 --- */
         #mic-btn {
             background: none;
             border: none;
@@ -179,22 +226,27 @@
         #mic-btn.listening svg {
             fill: white;
         }
-        /* --- CSS 新增結束 --- */
 
     </style>
 </head>
 <body>
+    <!-- HTML 新增：歡迎覆蓋層 -->
+    <div id="welcome-overlay">
+        <h1>歡迎來到激情對話室</h1>
+        <p>準備好同型男社工 Dicky 對話未？</p>
+        <button id="start-btn-overlay">點我開始</button>
+    </div>
 
     <div class="chat-container">
         <div class="avatar-section">
             <img id="avatar-image" src="https://raw.githubusercontent.com/kook2212/dicky/main/20251106224045.png" alt="數字人頭像">
         </div>
         <div class="chat-messages" id="chat-messages">
-            <div class="message bot-message">你好！我是您的數字人助理。您可以打字，或點擊麥克風對我說話。</div>
+            <!-- HTML 修改：更新歡迎語 -->
+            <div class="message bot-message" id="welcome-message">你好我是型男社工Dicky 快啲同我展開一場激情對話</div>
         </div>
         <div class="input-section">
             <input type="text" id="user-input" placeholder="在這裡輸入訊息...">
-            <!-- HTML 新增：麥克風按鈕 -->
             <button id="mic-btn" title="語音輸入">
                 <svg viewBox="0 0 24 24">
                     <path d="M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.49 6-3.31 6-6.72h-1.7z"/>
@@ -209,24 +261,34 @@
         const userInput = document.getElementById('user-input');
         const sendBtn = document.getElementById('send-btn');
         const avatarImage = document.getElementById('avatar-image');
-        const micBtn = document.getElementById('mic-btn'); // 新增：獲取麥克風按鈕
+        const micBtn = document.getElementById('mic-btn');
+        
+        // --- JavaScript 新增：處理歡迎覆蓋層 ---
+        const welcomeOverlay = document.getElementById('welcome-overlay');
+        const startBtnOverlay = document.getElementById('start-btn-overlay');
+        const welcomeMessageElement = document.getElementById('welcome-message');
 
-        // --- JavaScript 語音辨識核心功能 ---
+        startBtnOverlay.addEventListener('click', () => {
+            // 隱藏覆蓋層
+            welcomeOverlay.style.display = 'none';
 
-        // 檢查瀏覽器是否支援 SpeechRecognition
+            // 獲取歡迎語文本並朗讀
+            const welcomeText = welcomeMessageElement.textContent;
+            speak(welcomeText);
+        });
+        // --- JavaScript 新增結束 ---
+
+
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         let recognition;
 
         if (SpeechRecognition) {
             recognition = new SpeechRecognition();
-            
-            // 設定辨識語言，'zh-HK' 是香港粵語，'zh-TW' 是台灣國語
             recognition.lang = 'zh-HK'; 
-            recognition.continuous = false; // 只辨識一句話
-            recognition.interimResults = true; // 即時顯示辨識結果
+            recognition.continuous = false;
+            recognition.interimResults = true;
 
             micBtn.addEventListener('click', () => {
-                // 檢查是否正在聆聽，如果是就停止，否則就開始
                 if (micBtn.classList.contains('listening')) {
                     recognition.stop();
                 } else {
@@ -239,19 +301,16 @@
                 }
             });
 
-            // 當辨識開始時
             recognition.onstart = () => {
                 micBtn.classList.add('listening');
                 userInput.placeholder = '正在聆聽...';
             };
 
-            // 當辨識結束時
             recognition.onend = () => {
                 micBtn.classList.remove('listening');
                 userInput.placeholder = '在這裡輸入訊息...';
             };
 
-            // 當發生錯誤時
             recognition.onerror = (event) => {
                 console.error('語音辨識錯誤:', event.error);
                 let errorMessage = '發生語音辨識錯誤。';
@@ -263,7 +322,6 @@
                 appendMessage(errorMessage, 'bot');
             };
 
-            // 當有辨識結果時
             recognition.onresult = (event) => {
                 let interimTranscript = '';
                 let finalTranscript = '';
@@ -276,23 +334,17 @@
                     }
                 }
                 
-                // 將即時結果顯示在輸入框
                 userInput.value = finalTranscript || interimTranscript;
                 
-                // 如果有最終結果，就自動發送訊息
                 if (finalTranscript) {
                     sendMessage();
                 }
             };
 
         } else {
-            // 如果瀏覽器不支援，隱藏按鈕並提示用戶
             micBtn.style.display = 'none';
             console.log('您的瀏覽器不支援語音辨識功能。');
-            // 可以在頁面上顯示更友善的提示
         }
-
-        // --- 原有功能保持不變 ---
 
         function sendMessage() {
             const messageText = userInput.value.trim();
@@ -321,9 +373,9 @@
             if (lowerUserText.includes('hello') || userText.includes('你好')) {
                 botText = 'Hello! 很高興見到你。';
             } else if (userText.includes('你叫咩名') || userText.includes('你叫什么名字')) {
-                botText = '我是基於您的照片創建的數字人。您可以叫我您的數位分身。';
+                botText = '我係型男社工 Dicky！';
             } else {
-                botText = '抱歉，我還在學習中，暫時無法理解「' + userText + '」這句話。';
+                botText = '你呢句嘢好正喎，不過我仲學緊嘢，試下講啲其他嘢？';
             }
 
             appendMessage(botText, 'bot');
@@ -342,7 +394,7 @@
             if ('speechSynthesis' in window) {
                 window.speechSynthesis.cancel();
                 const utterance = new SpeechSynthesisUtterance(text);
-                utterance.lang = 'zh-HK'; // 讓機器人也用粵語回答
+                utterance.lang = 'zh-HK';
                 
                 utterance.onstart = () => avatarImage.classList.add('speaking');
                 utterance.onend = () => avatarImage.classList.remove('speaking');
