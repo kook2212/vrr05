@@ -38,11 +38,13 @@
             margin: 0;
             display: flex;
             justify-content: center;
-            align-items: center;
-            height: 100vh;
-            padding: 1rem;
+            /* 修改：從 center 改為 flex-start，讓內容靠上 */
+            align-items: flex-start;
+            min-height: 100vh;
+            /* 修改：調整 padding，上方留 5vh 的空間，左右和下方留 1rem */
+            padding: 5vh 1rem 1rem;
             box-sizing: border-box;
-            overflow: hidden;
+            overflow-y: auto; /* 如果內容超高，允許滾動 */
             transition: background-color 0.3s ease;
         }
 
@@ -119,8 +121,9 @@
         .chat-container {
             width: 100%;
             max-width: 500px;
-            height: 80vh;
-            max-height: 700px;
+            /* 修改：高度從 80vh 改為 85vh，以利用更多垂直空間 */
+            height: 85vh;
+            max-height: 800px; /* 增加最大高度限制 */
             background-color: var(--secondary-bg);
             border-radius: 15px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
@@ -135,13 +138,12 @@
             background-color: #000;
             padding: 20px;
             flex-shrink: 0;
-            position: relative; /* 設為 relative 以便絕對定位子元素 */
+            position: relative;
             display: flex;
             justify-content: center;
             align-items: center;
         }
         
-        /* 新增：返回按鈕的樣式 */
         #back-to-welcome-btn {
             position: absolute;
             top: 15px;
@@ -151,18 +153,18 @@
             cursor: pointer;
             padding: 5px;
             border-radius: 50%;
-            z-index: 10; /* 確保在圖片上方 */
+            z-index: 10;
             transition: background-color 0.2s;
         }
 
         #back-to-welcome-btn:hover {
-            background-color: rgba(255, 255, 255, 0.1); /* 滑鼠懸停時的微光效果 */
+            background-color: rgba(255, 255, 255, 0.1);
         }
 
         #back-to-welcome-btn svg {
             width: 24px;
             height: 24px;
-            fill: var(--text-color); /* 顏色會跟隨主題變化 */
+            fill: var(--text-color);
         }
 
         #avatar-image {
@@ -313,7 +315,6 @@
 
     <div class="chat-container">
         <div class="avatar-section">
-            <!-- 新增：返回按鈕 -->
             <button id="back-to-welcome-btn" title="返回主頁">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                     <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
@@ -322,7 +323,6 @@
             <img id="avatar-image" src="https://raw.githubusercontent.com/kook2212/dicky/main/20251106224045.png" alt="數字人頭像">
         </div>
         <div class="chat-messages" id="chat-messages">
-            <!-- 初始歡迎訊息會由JS動態控制 -->
         </div>
         <div class="input-section">
             <input type="text" id="user-input" placeholder="在這裡輸入訊息...">
@@ -346,15 +346,37 @@
         const startBtnBlue = document.getElementById('start-btn-blue');
         const startBtnPink = document.getElementById('start-btn-pink');
         const bodyElement = document.body;
-
-        // 新增：獲取返回按鈕
         const backToWelcomeBtn = document.getElementById('back-to-welcome-btn');
 
-        // 預設的歡迎訊息內容
+        // 新增：用於儲存粵語男聲的變數
+        let cantoneseMaleVoice = null;
+
         const initialWelcomeText = '你好我是型男社工Dicky 快啲同我展開一場激情對話';
 
+        // 新增：載入並尋找特定語音的函數
+        function loadVoices() {
+            const voices = window.speechSynthesis.getVoices();
+            // 優先尋找 macOS/iOS 上的 "Daniel" 粵語男聲
+            cantoneseMaleVoice = voices.find(voice => voice.lang === 'zh-HK' && voice.name.includes('Daniel'));
+            
+            // 如果找不到，則尋找任何一個可用的粵語聲音作為後備
+            if (!cantoneseMaleVoice) {
+                cantoneseMaleVoice = voices.find(voice => voice.lang === 'zh-HK');
+            }
+
+            if (cantoneseMaleVoice) {
+                console.log('成功載入粵語語音:', cantoneseMaleVoice.name);
+            } else {
+                console.warn('在此設備上未找到指定的粵語語音。將使用瀏覽器預設。');
+            }
+        }
+
+        // 語音列表是異步載入的，需要監聽 'voiceschanged' 事件
+        window.speechSynthesis.onvoiceschanged = loadVoices;
+        // 首次手動執行一次，以防語音已載入
+        loadVoices();
+
         function resetChat() {
-            // 清空聊天記錄並重新加入初始歡迎訊息
             chatMessages.innerHTML = '';
             const welcomeMessageElement = document.createElement('div');
             welcomeMessageElement.classList.add('message', 'bot-message');
@@ -368,33 +390,23 @@
                 bodyElement.classList.add('theme-pink');
             }
             welcomeOverlay.style.display = 'none';
-            resetChat(); // 每次開始遊戲時都重置聊天室
+            resetChat();
             speak(initialWelcomeText);
         }
 
-        // 新增：返回歡迎畫面的函數
         function returnToWelcome() {
-            // 顯示歡迎畫面
             welcomeOverlay.style.display = 'flex';
-
-            // 重置主題
             bodyElement.classList.remove('theme-pink');
-
-            // 停止任何正在播放或辨識的語音
             window.speechSynthesis.cancel();
             if (recognition && micBtn.classList.contains('listening')) {
                 recognition.stop();
             }
             avatarImage.classList.remove('speaking');
-
-            // 清空輸入框
             userInput.value = '';
         }
 
         startBtnBlue.addEventListener('click', () => startGame('blue'));
         startBtnPink.addEventListener('click', () => startGame('pink'));
-        
-        // 新增：為返回按鈕添加事件監聽
         backToWelcomeBtn.addEventListener('click', returnToWelcome);
 
 
@@ -513,7 +525,14 @@
             if ('speechSynthesis' in window) {
                 window.speechSynthesis.cancel();
                 const utterance = new SpeechSynthesisUtterance(text);
-                utterance.lang = 'zh-HK';
+                
+                // 修改：如果找到了粵語男聲，就使用它
+                if (cantoneseMaleVoice) {
+                    utterance.voice = cantoneseMaleVoice;
+                } else {
+                    // 如果沒有找到，則繼續使用語言代碼作為後備
+                    utterance.lang = 'zh-HK';
+                }
                 
                 utterance.onstart = () => avatarImage.classList.add('speaking');
                 utterance.onend = () => avatarImage.classList.remove('speaking');
@@ -525,9 +544,7 @@
             }
         }
         
-        // 初始頁面加載時，先清空一次聊天室，確保狀態乾淨
         resetChat();
-        // 隱藏初始的歡迎訊息，因為它在聊天容器內
         chatMessages.innerHTML = '';
 
     </script>
