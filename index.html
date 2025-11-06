@@ -3,15 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>型男社工Dicky - 激情對話</title>
+    <title>型男社工Dicky - 選擇你的對話模式</title>
     <style>
+        /* 預設：正常深藍色主題 */
         :root {
-            --primary-bg: #1a1a1a;
-            --secondary-bg: #2b2b2b;
-            --text-color: #e0e0e0;
-            --accent-color: #007bff;
-            --border-color: #444;
-            --danger-color: #dc3545;
+            --primary-bg: #0a192f;         /* 深海軍藍背景 */
+            --secondary-bg: #172a45;       /* 較淺的深藍色，用於聊天容器 */
+            --text-color: #ccd6f6;         /* 淡藍灰色文字 */
+            --accent-color: #007bff;       /* 標準的亮藍色 */
+            --border-color: #233554;       /* 邊框顏色 */
+            --danger-color: #dc3545;       /* 麥克風啟用時的紅色 */
+            --bot-message-bg: #233554;     /* 機器人訊息背景 */
+            --input-bg: #233554;           /* 輸入框背景 */
+            --hover-color: #0056b3;        /* 藍色按鈕懸停 */
+        }
+
+        /* 覆蓋樣式：當 body 有 'theme-pink' class 時，啟用激情粉紅主題 */
+        body.theme-pink {
+            --primary-bg: #2c001e;         /* 深邃的紫紅色背景 */
+            --secondary-bg: #3d0f35;       /* 較淺的暗紫色，用於聊天容器 */
+            --text-color: #fce4ec;         /* 淡粉紅色文字 */
+            --accent-color: #ff007f;       /* 核心的螢光粉紅/洋紅色 */
+            --border-color: #5a1846;       /* 邊框顏色，暗粉紫色 */
+            --danger-color: #ff4081;       /* 麥克風啟用時的亮粉紅色 */
+            --bot-message-bg: #4a2343;     /* 機器人訊息的背景色 */
+            --input-bg: #4a2343;           /* 輸入框的背景色 */
+            --hover-color: #ff4da6;        /* 粉色按鈕懸停時更亮的粉紅色 */
         }
 
         body {
@@ -25,17 +42,17 @@
             height: 100vh;
             padding: 1rem;
             box-sizing: border-box;
-            overflow: hidden; /* 隱藏滾動條，因為有覆蓋層 */
+            overflow: hidden;
+            transition: background-color 0.3s ease;
         }
 
-        /* --- CSS 新增：歡迎覆蓋層 --- */
         #welcome-overlay {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0, 0, 0, 0.8);
+            background-color: rgba(0, 0, 0, 0.85);
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -47,33 +64,57 @@
             box-sizing: border-box;
         }
 
-        #welcome-overlay h1 {
-            font-size: 2.5rem;
-            margin-bottom: 1rem;
+        .welcome-title {
+            font-size: 2.2rem;
+            margin-bottom: 0.5rem;
+            font-weight: bold;
+            color: white;
         }
-
-        #welcome-overlay p {
+        
+        .welcome-subtitle {
             font-size: 1.2rem;
-            margin-bottom: 2rem;
+            margin-top: 0;
+            color: #e0e0e0;
         }
 
-        #start-btn-overlay {
+        .button-container {
+            margin-top: 2.5rem;
+            display: flex;
+            flex-direction: row;
+            gap: 1.5rem;
+        }
+
+        .start-btn {
             padding: 15px 30px;
             font-size: 1.2rem;
             font-weight: bold;
             color: white;
-            background-color: var(--accent-color);
             border: none;
             border-radius: 30px;
             cursor: pointer;
-            transition: transform 0.2s, background-color 0.2s;
+            transition: transform 0.2s, background-color 0.2s, box-shadow 0.2s;
+            min-width: 150px;
         }
-
-        #start-btn-overlay:hover {
+        
+        #start-btn-blue {
+            background-color: #007bff;
+            box-shadow: 0 0 15px #007bff;
+        }
+        #start-btn-blue:hover {
             background-color: #0056b3;
             transform: scale(1.05);
+            box-shadow: 0 0 25px #0056b3;
         }
-        /* --- CSS 新增結束 --- */
+
+        #start-btn-pink {
+            background-color: #ff007f;
+            box-shadow: 0 0 15px #ff007f;
+        }
+        #start-btn-pink:hover {
+            background-color: #ff4da6;
+            transform: scale(1.05);
+            box-shadow: 0 0 25px #ff4da6;
+        }
 
         .chat-container {
             width: 100%;
@@ -87,16 +128,41 @@
             flex-direction: column;
             overflow: hidden;
             border: 1px solid var(--border-color);
+            transition: background-color 0.3s ease, border-color 0.3s ease;
         }
 
         .avatar-section {
             background-color: #000;
             padding: 20px;
             flex-shrink: 0;
-            position: relative;
+            position: relative; /* 設為 relative 以便絕對定位子元素 */
             display: flex;
             justify-content: center;
             align-items: center;
+        }
+        
+        /* 新增：返回按鈕的樣式 */
+        #back-to-welcome-btn {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 50%;
+            z-index: 10; /* 確保在圖片上方 */
+            transition: background-color 0.2s;
+        }
+
+        #back-to-welcome-btn:hover {
+            background-color: rgba(255, 255, 255, 0.1); /* 滑鼠懸停時的微光效果 */
+        }
+
+        #back-to-welcome-btn svg {
+            width: 24px;
+            height: 24px;
+            fill: var(--text-color); /* 顏色會跟隨主題變化 */
         }
 
         #avatar-image {
@@ -107,7 +173,7 @@
             object-fit: cover;
             border-radius: 15px;
             border: 3px solid var(--accent-color);
-            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out, border-color 0.3s ease;
         }
 
         #avatar-image.speaking {
@@ -139,6 +205,7 @@
             border-radius: 18px;
             margin-bottom: 10px;
             line-height: 1.4;
+            transition: background-color 0.3s ease;
         }
 
         .user-message {
@@ -149,7 +216,7 @@
         }
 
         .bot-message {
-            background-color: #3a3a3a;
+            background-color: var(--bot-message-bg);
             color: var(--text-color);
             align-self: flex-start;
             border-bottom-left-radius: 5px;
@@ -161,6 +228,7 @@
             border-top: 1px solid var(--border-color);
             background-color: var(--secondary-bg);
             align-items: center;
+            transition: background-color 0.3s ease, border-color 0.3s ease;
         }
 
         #user-input {
@@ -168,15 +236,17 @@
             padding: 10px 15px;
             border: 1px solid var(--border-color);
             border-radius: 20px;
-            background-color: #333;
+            background-color: var(--input-bg);
             color: var(--text-color);
             font-size: 16px;
             margin-right: 10px;
+            transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
         }
 
         #user-input:focus {
             outline: none;
             border-color: var(--accent-color);
+            box-shadow: 0 0 5px var(--accent-color);
         }
 
         #send-btn {
@@ -192,7 +262,7 @@
         }
 
         #send-btn:hover {
-            background-color: #0056b3;
+            background-color: var(--hover-color);
         }
         
         #mic-btn {
@@ -210,13 +280,14 @@
         }
 
         #mic-btn:hover {
-            background-color: #444;
+            background-color: var(--border-color);
         }
 
         #mic-btn svg {
             width: 24px;
             height: 24px;
             fill: var(--text-color);
+            transition: fill 0.3s ease;
         }
 
         #mic-btn.listening {
@@ -230,20 +301,28 @@
     </style>
 </head>
 <body>
-    <!-- HTML 新增：歡迎覆蓋層 -->
     <div id="welcome-overlay">
-        <h1>歡迎來到激情對話室</h1>
-        <p>準備好同型男社工 Dicky 對話未？</p>
-        <button id="start-btn-overlay">點我開始</button>
+        <h1 class="welcome-title">歡迎來到激情對話室</h1>
+        <p class="welcome-subtitle">準備好同型男社工 Dicky 對話未？</p>
+        
+        <div class="button-container">
+            <button id="start-btn-blue" class="start-btn">正常開始</button>
+            <button id="start-btn-pink" class="start-btn">點我開始</button>
+        </div>
     </div>
 
     <div class="chat-container">
         <div class="avatar-section">
+            <!-- 新增：返回按鈕 -->
+            <button id="back-to-welcome-btn" title="返回主頁">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                    <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
+                </svg>
+            </button>
             <img id="avatar-image" src="https://raw.githubusercontent.com/kook2212/dicky/main/20251106224045.png" alt="數字人頭像">
         </div>
         <div class="chat-messages" id="chat-messages">
-            <!-- HTML 修改：更新歡迎語 -->
-            <div class="message bot-message" id="welcome-message">你好我是型男社工Dicky 快啲同我展開一場激情對話</div>
+            <!-- 初始歡迎訊息會由JS動態控制 -->
         </div>
         <div class="input-section">
             <input type="text" id="user-input" placeholder="在這裡輸入訊息...">
@@ -263,20 +342,60 @@
         const avatarImage = document.getElementById('avatar-image');
         const micBtn = document.getElementById('mic-btn');
         
-        // --- JavaScript 新增：處理歡迎覆蓋層 ---
         const welcomeOverlay = document.getElementById('welcome-overlay');
-        const startBtnOverlay = document.getElementById('start-btn-overlay');
-        const welcomeMessageElement = document.getElementById('welcome-message');
+        const startBtnBlue = document.getElementById('start-btn-blue');
+        const startBtnPink = document.getElementById('start-btn-pink');
+        const bodyElement = document.body;
 
-        startBtnOverlay.addEventListener('click', () => {
-            // 隱藏覆蓋層
+        // 新增：獲取返回按鈕
+        const backToWelcomeBtn = document.getElementById('back-to-welcome-btn');
+
+        // 預設的歡迎訊息內容
+        const initialWelcomeText = '你好我是型男社工Dicky 快啲同我展開一場激情對話';
+
+        function resetChat() {
+            // 清空聊天記錄並重新加入初始歡迎訊息
+            chatMessages.innerHTML = '';
+            const welcomeMessageElement = document.createElement('div');
+            welcomeMessageElement.classList.add('message', 'bot-message');
+            welcomeMessageElement.id = 'welcome-message';
+            welcomeMessageElement.textContent = initialWelcomeText;
+            chatMessages.appendChild(welcomeMessageElement);
+        }
+
+        function startGame(theme) {
+            if (theme === 'pink') {
+                bodyElement.classList.add('theme-pink');
+            }
             welcomeOverlay.style.display = 'none';
+            resetChat(); // 每次開始遊戲時都重置聊天室
+            speak(initialWelcomeText);
+        }
 
-            // 獲取歡迎語文本並朗讀
-            const welcomeText = welcomeMessageElement.textContent;
-            speak(welcomeText);
-        });
-        // --- JavaScript 新增結束 ---
+        // 新增：返回歡迎畫面的函數
+        function returnToWelcome() {
+            // 顯示歡迎畫面
+            welcomeOverlay.style.display = 'flex';
+
+            // 重置主題
+            bodyElement.classList.remove('theme-pink');
+
+            // 停止任何正在播放或辨識的語音
+            window.speechSynthesis.cancel();
+            if (recognition && micBtn.classList.contains('listening')) {
+                recognition.stop();
+            }
+            avatarImage.classList.remove('speaking');
+
+            // 清空輸入框
+            userInput.value = '';
+        }
+
+        startBtnBlue.addEventListener('click', () => startGame('blue'));
+        startBtnPink.addEventListener('click', () => startGame('pink'));
+        
+        // 新增：為返回按鈕添加事件監聽
+        backToWelcomeBtn.addEventListener('click', returnToWelcome);
 
 
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -405,6 +524,12 @@
                 console.log('您的瀏覽器不支援語音合成功能。');
             }
         }
+        
+        // 初始頁面加載時，先清空一次聊天室，確保狀態乾淨
+        resetChat();
+        // 隱藏初始的歡迎訊息，因為它在聊天容器內
+        chatMessages.innerHTML = '';
+
     </script>
 
 </body>
